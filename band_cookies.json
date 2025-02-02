@@ -1,0 +1,77 @@
+[
+    {
+        "domain": "band.us",
+        "httpOnly": true,
+        "name": "JSESSIONID",
+        "path": "/",
+        "sameSite": "Lax",
+        "secure": false,
+        "value": "6902320D450E0F89DF7A6A8E7BE7DBEF"
+    },
+    {
+        "domain": ".band.us",
+        "httpOnly": false,
+        "name": "ai",
+        "path": "/",
+        "sameSite": "Lax",
+        "secure": false,
+        "value": "\"7e2a4c1,194cfd1c7d3\""
+    },
+    {
+        "domain": ".band.us",
+        "httpOnly": false,
+        "name": "as",
+        "path": "/",
+        "sameSite": "Lax",
+        "secure": true,
+        "value": "\"72bd214f:h16gbRCFDTn40f8kdGpRR9GfJYTa1h7MOLIHWdQblNo=\""
+    },
+    {
+        "domain": ".band.us",
+        "httpOnly": false,
+        "name": "band_session",
+        "path": "/",
+        "sameSite": "Lax",
+        "secure": false,
+        "value": "ZQIAAGpLlM-IQhf4suCJb_-9HH6xQ2V148au2k2dJ36L7uwTaIBMG-olFXcGYl4_ikGhZA545oHdMM_3VPN51VhiNP0FKHkbl360FSicKt56fR7Z"
+    },
+    {
+        "domain": ".band.us",
+        "httpOnly": true,
+        "name": "JSESSIONID",
+        "path": "/",
+        "sameSite": "Lax",
+        "secure": true,
+        "value": "694FE76C36BA462050BECF81F89202AC"
+    },
+    {
+        "domain": ".band.us",
+        "expiry": 1771265382,
+        "httpOnly": false,
+        "name": "BBC",
+        "path": "/",
+        "sameSite": "Lax",
+        "secure": true,
+        "value": "wdh_O62kVC97wbmWnGqlK"
+    },
+    {
+        "domain": ".band.us",
+        "expiry": 1771265388,
+        "httpOnly": false,
+        "name": "di",
+        "path": "/",
+        "sameSite": "Lax",
+        "secure": true,
+        "value": "web-AAAAABgFZLuJ3kzvYxsAZRbtTAAEnJQWTegtcn0oRftXbf5B7Ybvinc2olonmGXyWiALgM"
+    },
+    {
+        "domain": ".band.us",
+        "expiry": 1773040626,
+        "httpOnly": false,
+        "name": "language",
+        "path": "/",
+        "sameSite": "Lax",
+        "secure": false,
+        "value": "ko"
+    }
+]
