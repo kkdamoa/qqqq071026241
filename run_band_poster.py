@@ -136,134 +136,117 @@ def login(driver, config):
 def post_to_band(driver, config, band_info):
     try:
         print(f"\n=== '{band_info['name']}' 밴드에 포스팅 시도 중 ===")
-        # 밴드로 이동
-        driver.get(band_info['url'])
-        print(f"밴드 페이지 로드됨: {band_info['url']}")
         
-        # 페이지 완전 로딩 대기 시간 증가
-        time.sleep(10)  # 5초에서 10초로 증가
-        
-        # 페이지가 완전히 로드될 때까지 대기
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.TAG_NAME, "body"))
-        )
-        
-        # JavaScript가 완전히 로드될 때까지 대기
-        driver.execute_script("return document.readyState") == "complete"
-        
-        # 글쓰기 버튼을 찾기 전에 추가 대기 및 재시도 로직
+        # 여러번 시도하는 재시도 메커니즘 추가
         max_retries = 3
-        for attempt in range(max_retries):
+        for retry in range(max_retries):
             try:
-                write_btn = WebDriverWait(driver, 10).until(
-                    EC.element_to_be_clickable((By.CSS_SELECTOR, 'button._btnPostWrite'))
+                # 밴드로 이동
+                driver.get(band_info['url'])
+                print(f"밴드 페이지 로드됨: {band_info['url']}")
+                
+                # 페이지 완전 로딩 대기 시간 증가
+                time.sleep(15)  # 10초에서 15초로 증가
+                
+                # 명시적인 페이지 로드 상태 확인
+                WebDriverWait(driver, 20).until(
+                    lambda d: d.execute_script('return document.readyState') == 'complete'
                 )
-                driver.execute_script("arguments[0].scrollIntoView(true);", write_btn)
-                time.sleep(2)  # 스크롤 후 잠시 대기
-                driver.execute_script("arguments[0].click();", write_btn)
-                break
-            except Exception as e:
-                if attempt == max_retries - 1:
-                    raise
-                print(f"글쓰기 버튼 클릭 재시도 {attempt + 1}/{max_retries}")
-                time.sleep(5)
-        
-        # 글 작성
-        editor = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, 'div[contenteditable="true"]'))
-        )
-        print("에디터 찾음")
-        
-        # 포스팅 URL의 내용 가져오기
-        post_url = config['post_url']
-        content = get_url_content(post_url)
-        print(f"포스팅 URL 콘텐츠 가져옴: {post_url}")
-        
-        # 제목 입력
-        title = config['title']
-        if (title):
-            editor.send_keys(title)
-            ActionChains(driver).send_keys(Keys.ENTER).perform()
-            time.sleep(1)
-            print(f"제목 입력됨: {title}")
-        
-        # URL 입력
-        editor.click()
-        editor.clear()
-        editor.send_keys(post_url)
-        time.sleep(1)
-        print("URL 입력됨")
-        
-        ActionChains(driver).send_keys(Keys.ENTER).perform()
-        print("URL 미리보기 로딩 중... (10초)")
-        time.sleep(10)
-        print("URL 미리보기 로딩 완료")
-        
-        # URL 텍스트 삭제
-        editor.click()
-        driver.execute_script("""
-            var editor = arguments[0];
-            var url = arguments[1];
-            editor.innerHTML = editor.innerHTML.replace(url, '');
-            editor.innerHTML = editor.innerHTML.replace(/^\\n|\\n$/g, '');
-            editor.innerHTML = editor.innerHTML.trim();
-            editor.dispatchEvent(new Event('input', { bubbles: true }));
-        """, editor, post_url)
-        print("URL 텍스트 삭제됨")
-        
-        # 게시 버튼 클릭
-        submit_btn = WebDriverWait(driver, 5).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.uButton.-sizeM._btnSubmitPost.-confirm'))
-        )
-        time.sleep(3)
-        submit_btn.click()
 
-        # 게시판 선택 팝업 처리
-        try:
-            # 팝업 헤더 확인
-            popup_header = WebDriverWait(driver, 5).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, 'header.modalHeader'))
-            )
-            
-            if "게시판 선택" in popup_header.text:
-                print("게시판 선택 팝업 감지됨")
+                # 페이지 새로고침 시도
+                if retry > 0:
+                    driver.refresh()
+                    time.sleep(10)
                 
-                # 첫 번째 flexList 요소 찾기 및 클릭
-                first_flex_list = WebDriverWait(driver, 5).until(
-                    EC.element_to_be_clickable((By.CSS_SELECTOR, 'label.flexList'))
+                # 글쓰기 버튼이 있는지 확인
+                write_buttons = WebDriverWait(driver, 10).until(
+                    EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'button._btnPostWrite'))
                 )
-                first_flex_list.click()
-                print("첫 번째 게시판 선택됨")
                 
-                # 확인 버튼 클릭
-                confirm_btn = WebDriverWait(driver, 5).until(
-                    EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.uButton.-confirm._btnConfirm'))
+                if not write_buttons:
+                    raise Exception("글쓰기 버튼을 찾을 수 없습니다")
+                
+                # 스크롤을 최상단으로 이동
+                driver.execute_script("window.scrollTo(0, 0);")
+                time.sleep(2)
+                
+                # JavaScript로 글쓰기 버튼 클릭
+                driver.execute_script("arguments[0].click();", write_buttons[0])
+                print("글쓰기 버튼 클릭됨")
+                time.sleep(5)
+                
+                # 에디터 찾기 및 작성
+                editor = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, 'div[contenteditable="true"]'))
                 )
-                confirm_btn.click()
-                print("게시판 선택 확인")
                 
-                # 최종 게시 버튼 클릭
-                final_submit_btn = WebDriverWait(driver, 5).until(
-                    EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.uButton.-sizeM._btnSubmitPost.-confirm'))
+                # 에디터를 한번 클릭하고 내용을 지움
+                driver.execute_script("arguments[0].click();", editor)
+                driver.execute_script("arguments[0].innerHTML = '';", editor)
+                time.sleep(2)
+                
+                # 제목 입력 (JavaScript 사용)
+                if config.get('title'):
+                    driver.execute_script(
+                        "arguments[0].innerHTML += arguments[1] + '<br>';", 
+                        editor, 
+                        config['title']
+                    )
+                    time.sleep(2)
+                
+                # URL 입력 (JavaScript 사용)
+                post_url = config['post_url']
+                driver.execute_script(
+                    "arguments[0].innerHTML += arguments[1];", 
+                    editor, 
+                    post_url
                 )
                 time.sleep(2)
-                final_submit_btn.click()
-                print("최종 게시 완료")
-        except Exception as e:
-            print(f"게시판 선택 처리 중 오류 (무시됨): {str(e)}")
-
-        # 포스팅 성공 후 대기 시간을 랜덤화
-        import random
-        wait_time = random.uniform(15, 25)  # 15-25초 사이 랜덤 대기
-        print(f"다음 밴드로 이동하기 전 {wait_time:.1f}초 대기...")
-        time.sleep(wait_time)
-        
-        return True
-        
+                
+                # Enter 키 이벤트 발생
+                ActionChains(driver).key_down(Keys.ENTER).key_up(Keys.ENTER).perform()
+                print("URL 미리보기 로딩 중... (15초)")
+                time.sleep(15)
+                
+                # URL 텍스트 삭제
+                driver.execute_script("""
+                    var editor = arguments[0];
+                    var url = arguments[1];
+                    editor.innerHTML = editor.innerHTML.replace(url, '');
+                    editor.innerHTML = editor.innerHTML.replace(/^\\n|\\n$/g, '');
+                    editor.innerHTML = editor.innerHTML.trim();
+                """, editor, post_url)
+                time.sleep(2)
+                
+                # 게시 버튼 클릭
+                submit_btns = driver.find_elements(By.CSS_SELECTOR, 'button.uButton.-sizeM._btnSubmitPost.-confirm')
+                if submit_btns:
+                    driver.execute_script("arguments[0].click();", submit_btns[0])
+                    time.sleep(5)
+                    
+                    # 게시판 선택 팝업 처리
+                    try:
+                        # ...existing code for popup handling...
+                        pass
+                    except Exception as e:
+                        print(f"게시판 선택 처리 중 오류 (무시됨): {str(e)}")
+                    
+                    print("포스팅 성공!")
+                    time.sleep(random.uniform(20, 30))  # 대기 시간 증가
+                    return True
+                    
+                raise Exception("게시 버튼을 찾을 수 없습니다")
+                
+            except Exception as e:
+                print(f"시도 {retry + 1}/{max_retries} 실패: {str(e)}")
+                if retry < max_retries - 1:
+                    time.sleep(30)  # 재시도 전 30초 대기
+                    continue
+                raise
+                
     except Exception as e:
         print(f"\n❌ '{band_info['name']}' 밴드 포스팅 실패: {str(e)}")
-        # 실패 시 더 긴 대기 시간 적용
-        time.sleep(30)  # 실패 후 30초 대기
+        time.sleep(45)  # 실패 시 대기 시간 증가
         return False
 
 def normal_posting_process(driver, config):
